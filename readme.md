@@ -1,4 +1,4 @@
-# 🧪 Digital Marketing A/B Test Optimization Platform
+# Digital Marketing A/B Test Optimization Platform
 
 > A comprehensive data science project focused on optimizing marketing campaigns through advanced A/B testing methodologies and statistical analysis.
 
@@ -88,28 +88,6 @@ BankCustomerCallSubscriptionAnalysis/
 └── README.md
 ```
 
-## Key Features
-
-### Advanced A/B Testing
-- **Monte Carlo Simulation Engine** - Generate thousands of test scenarios
-- **Statistical Power Analysis** - Calculate optimal sample sizes
-- **Multiple Testing Correction** - Bonferroni and FDR implementations
-- **Sequential Testing** - Early stopping rules and adaptive sizing
-- **Bayesian A/B Testing** - Credible intervals and posterior analysis
-
-### Campaign Analytics
-- Customer segmentation and targeting
-- Conversion rate optimization
-- Economic indicator impact analysis
-- Contact timing optimization
-- Channel effectiveness analysis
-
-### Interactive Dashboard
-- Real-time A/B test configuration
-- Monte Carlo simulation results
-- Power calculation tools
-- Statistical significance testing
-- Business impact projections
 
 ## Installation
 
@@ -119,63 +97,6 @@ BankCustomerCallSubscriptionAnalysis/
    cd BankCustomerCallSubscriptionAnalysis
    ```
 
-2. **Create virtual environment:**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Download dataset:**
-   ```bash
-   # Dataset will be automatically downloaded on first run
-   python src/data_loader.py
-   ```
-
-## Usage
-
-### Quick Start
-
-```python
-from src.ab_test_simulator import ABTestSimulator
-from src.statistical_analysis import PowerAnalysis
-
-# Initialize A/B test simulator
-simulator = ABTestSimulator()
-
-# Run Monte Carlo simulation
-results = simulator.run_simulation(
-    baseline_rate=0.11,
-    effect_size=0.02,
-    sample_size=1000,
-    n_simulations=10000
-)
-
-# Calculate required sample size
-power_calc = PowerAnalysis()
-sample_size = power_calc.calculate_sample_size(
-    baseline_rate=0.11,
-    minimum_effect=0.02,
-    power=0.8,
-    alpha=0.05
-)
-```
-
-### Launch Dashboard
-
-```bash
-streamlit run dashboard/streamlit_app.py
-```
-
-### Run Analysis Notebooks
-
-```bash
-jupyter notebook notebooks/
-```
 ## Analysis Tasks
 
 ### Task 1: Exploratory Data Analysis & Customer Insights 
@@ -252,7 +173,16 @@ jupyter notebook notebooks/
 - **Statistical Framework** - Robust A/B testing methodology
 
 ### Business Impact
-- **Conversion Rate Improvement** - Projected increase in subscription rates
+- **Conversion Rate Improvemen2. **Create virtual environment:**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```t** - Projected increase in subscription rates
 - **Cost Optimization** - Reduced campaign costs through better targeting
 - **Revenue Growth** - Estimated financial impact of optimizations
 - **Testing Infrastructure** - Scalable framework for future experiments
