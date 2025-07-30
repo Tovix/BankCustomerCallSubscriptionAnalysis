@@ -37,12 +37,7 @@ class BaseDataOptimizationPipeline(ABC):
     def _removeOutliers(self, method: str = 'iqr', **kwargs) -> Self:
         """Remove outliers using specified method."""
         pass
-    
-    @abstractmethod
-    def _displayColumnsDistributions(self) -> Self:
-        """Visualize column distributions."""
-        pass
-    
+
     @abstractmethod
     def _parseDates(self, date_columns: list[str]) -> Self:
         """Auto-detect and convert date columns."""
@@ -92,20 +87,14 @@ class BaseDataOptimizationPipeline(ABC):
     def _extractDateFeatures(self) -> Self:
         """Create date-related features."""
         pass
-
-
-
-
+    
+    
 class BankDataOptimizationPipeline(BaseDataOptimizationPipeline):
     """A comprehensive pipeline for processing, cleaning, and optimizing banking data.
     
     This pipeline automates the entire data preparation workflow for banking datasets,
     including cleaning, type optimization, outlier detection, and quality validation.
     All methods support fluent chaining and provide visual feedback at each step.
-
-    Typical usage example:
-        pipeline = BankDataOptimizationPipeline("transactions.csv", ",")
-        cleaned_data = pipeline.DataFrame
 
     Attributes:
         dataPath (str): Absolute or relative path to the source CSV file
@@ -122,7 +111,6 @@ class BankDataOptimizationPipeline(BaseDataOptimizationPipeline):
         3. Null value handling
         4. Data type optimization
         5. Outlier detection and removal
-        6. Distribution visualization
 
         Args:
             dataPath: Path to the banking data CSV file
@@ -141,8 +129,7 @@ class BankDataOptimizationPipeline(BaseDataOptimizationPipeline):
         self.dataPath = dataPath
         try:
             self.DataFrame = pd.read_csv(filepath_or_buffer=self.dataPath, delimiter=delimiter)
-            self._dropDuplicates()._containsNullValues()._getUniqueValues()._optimizeDataTypes(
-                  )._removeOutliers()._displayColumnsDistributions()
+            self._removeOutliers()._dropDuplicates()._getUniqueValues()._optimizeDataTypes()
             self.DataFrame.info()
         except Exception as e:
             print("error: {}".format(e))
@@ -176,8 +163,6 @@ class BankDataOptimizationPipeline(BaseDataOptimizationPipeline):
 
         Returns:
             BankDataOptimizationPipeline: The instance itself for method chaining
-
-        Note:
             For large datasets, consider implementing a chunked processing
             version to reduce memory usage.
         """
@@ -267,72 +252,62 @@ class BankDataOptimizationPipeline(BaseDataOptimizationPipeline):
                     self.DataFrame[column] = self.DataFrame[column].astype('int32')
             if self.DataFrame[column].dtype == 'object':
                 self.DataFrame[column] = self.DataFrame[column].astype('category')
-        print(self.DataFrame.info())
         return self
     
     def _removeOutliers(self) -> Self:
-        """Identifies and removes outliers using the IQR method with visualization.
         
-        For each numerical column:
-        1. Displays initial distribution via boxplot
-        2. Calculates IQR bounds (Q1 - 1.5*IQR to Q3 + 1.5*IQR)
-        3. Filters records outside these bounds
-        4. Displays cleaned distribution via boxplot
-
-        Returns:
-            BankDataOptimizationPipeline: The instance itself for method chaining
-
-        Note:
-            The 1.5*IQR multiplier can be adjusted based on domain knowledge.
-            Consider adding a parameter to control this threshold.
-        """
-        numericalCols = self.DataFrame.select_dtypes(include='number')
-        print("Initial numerical columns:\n", numericalCols)
-        sns.boxplot(data=numericalCols)
-        plt.title("Data Distribution Before Outlier Removal")
-        plt.tight_layout()  
-        plt.show()
+        """Remove outliers using segment-based approach for contacted vs non-contacted customers."""
+        def displayBoxPlots(time: str) -> None:
+            numericalCols = self.DataFrame.select_dtypes(include='number')
+            numericalCols = numericalCols.drop(columns=['pdays'])
+            sns.boxplot(data=numericalCols)
+            plt.title("Data Distribution {} Outlier Removal".format(time))
+            plt.tight_layout()  
+            plt.show()
         
-        for column in numericalCols.columns:
-            Q1 = self.DataFrame[column].quantile(0.25)
-            Q3 = self.DataFrame[column].quantile(0.75)
-            IQR = Q3 - Q1
-            lower_bound = Q1 - 1.5 * IQR
-            upper_bound = Q3 + 1.5 * IQR
-            self.DataFrame = self.DataFrame[
-                (self.DataFrame[column] >= lower_bound) & 
-                (self.DataFrame[column] <= upper_bound)
-            ]
+        displayBoxPlots("Before")
+        # Separate contacted and non-contacted customers
+        contacted_mask = self.DataFrame['pdays'] != -1
+        non_contacted_mask = self.DataFrame['pdays'] == -1
         
-        numericalCols = self.DataFrame.select_dtypes(include='number')
-        sns.boxplot(data=numericalCols)
-        plt.title("Data Distribution After Outlier Removal")
-        plt.tight_layout()  
-        plt.show()
+        contacted_df = self.DataFrame[contacted_mask].copy()
+        non_contacted_df = self.DataFrame[non_contacted_mask].copy()
+        
+        # Get numerical columns (excluding pdays)
+        numerical_cols = [col for col in self.DataFrame.select_dtypes(include='number').columns if col != 'pdays']
+        
+        # Function to remove outliers from a dataframe
+        def remove_outliers_from_segment(df, segment_name):
+            if len(df) == 0:
+                return df
+            
+            mask = pd.Series(True, index=df.index)
+            
+            for col in numerical_cols:
+                Q1 = df[col].quantile(0.25)
+                Q3 = df[col].quantile(0.75)
+                IQR = Q3 - Q1
+                lower_bound = Q1 - 1.5 * IQR
+                upper_bound = Q3 + 1.5 * IQR
+                
+                column_mask = df[col].between(lower_bound, upper_bound)
+                mask &= column_mask
+                
+            
+            filtered_df = df[mask].copy()
+            return filtered_df
+        
+        # Remove outliers from each segment separately
+        contacted_clean = remove_outliers_from_segment(contacted_df, "Contacted customers")
+        non_contacted_clean = remove_outliers_from_segment(non_contacted_df, "Non-contacted customers")
+        
+        # Combine the cleaned segments
+        self.DataFrame = pd.concat([contacted_clean, non_contacted_clean], ignore_index=True)
+        displayBoxPlots("After")
         return self
     
-    def _displayColumnsDistributions(self) -> Self:
-        """Generates histogram visualizations for all column distributions.
-        
-        Creates a grid of histograms showing:
-        - Value distributions for numerical columns
-        - Category frequencies for categorical columns
-        - Automatic binning based on data characteristics
-
-        Returns:
-            BankDataOptimizationPipeline: The instance itself for method chaining
-
-        Note:
-            Uses seaborn's modern styling for publication-quality visuals.
-            The 20x15 figure size ensures readability for datasets with many columns.
-        """
-        plt.style.use('seaborn')
-        self.DataFrame.hist(bins=50, figsize=(20,15))
-        plt.suptitle("Column Distributions After Processing", y=1.02)
-        plt.tight_layout()
-        plt.show()
-        return self
-  
+    #-----------------------------------------------------------------------------------------#
+    #region Not Implemented
     def _parseDates(self, date_columns: list[str]) -> Self:
         """Auto-detect and convert date columns."""
         print("Not implemented yet: _parseDates")
@@ -380,10 +355,11 @@ class BankDataOptimizationPipeline(BaseDataOptimizationPipeline):
         """Create date-related features."""
         print("Not implemented yet: _extractDateFeatures")
         return self
+    #endregion
+    #-----------------------------------------------------------------------------------------#
     
 
-data = BankDataOptimizationPipeline('Data/bank/bank-full.csv', ';').DataFrame
-print(data.info())
+
 
 
 
