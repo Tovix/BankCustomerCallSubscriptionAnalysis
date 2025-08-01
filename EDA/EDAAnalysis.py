@@ -121,7 +121,7 @@ class BaseEDAAnalyzer(ABC):
         pass
 
 
-class EDADataAnalyzer(BaseEDAAnalyzer):
+class BankEdaDataAnalyzer(BaseEDAAnalyzer):
     """Concrete implementation performing EDA on banking/financial datasets.
     
     Inherits from BaseEDAAnalyzer and implements all required abstract methods.
@@ -228,3 +228,141 @@ class EDADataAnalyzer(BaseEDAAnalyzer):
             conclusion: Textual description of the insight.
         """
         self.generalConclusions[key] = conclusion
+    
+    def answerQuestion(self, question: str, answer: str) -> None:
+        self.questions[question] = answer
+    
+    def calculateConversionRate(self, ColsType: str = "Demographic"):
+        conversionRate = {}
+        columnsSelected = []
+        self.data['balanceGroup'] = pd.cut(
+        self.data['balance'],
+        bins=range(
+            int(self.data['balance'].min()), 
+            int(self.data['balance'].max()) + 1000, 
+            1000
+        ),
+        right=False
+    )
+        if ColsType == 'Demographic':
+            columnsSelected = ['age', 'job', 'marital', 'education', 'default', 'balanceGroup', 'housing', 'loan']
+        elif ColsType == "Economic":
+            columnsSelected = ['balanceGroup', 'default', 'housing', 'loan', 'job']
+        def process_demographic(column, ax=None):
+            """Helper function to process each columns group"""
+            if column == 'y':
+                return
+            columnYesCount = self.data[self.data['y'] == 1].groupby(column).aggregate({'y': 'count'})\
+                .reset_index().set_index(column)
+            totalRecCount = self.data.groupby(column).aggregate({'y': 'count'})\
+                .reset_index().set_index(column)
+            columnYesCount['conversionRate'] = (columnYesCount['y'] / totalRecCount['y']) * 100
+            if ax is not None:
+                plot_data = columnYesCount.sort_values('conversionRate', ascending=False).head(5).reset_index()
+                sns.barplot(x=column, y='conversionRate', data=plot_data, ax=ax, palette='coolwarm')
+                ax.set_title(f'{column.capitalize()}')
+                ax.tick_params(axis='x', rotation=45)
+            conversionRate[column] = columnYesCount.sort_values(by='conversionRate', ascending=False)\
+                .reset_index().iloc[[0]][[column, 'conversionRate']]
+            print(f"{column}: Group {conversionRate[column][column].values[0]} has highest conversion rate {round(conversionRate[column]['conversionRate'].values[0], 2)} %")
+            print("#-----------------------------------------------------------------#")
+        fig1, axes1 = plt.subplots(2, 2, figsize=(15, 12))
+        fig1.suptitle('Conversion Rates - Part 1/2', fontsize=16)
+        for idx, column in enumerate(columnsSelected[:4]):
+            process_demographic(column, ax=axes1.flatten()[idx])
+        plt.tight_layout()
+        plt.show()
+        fig2, axes2 = plt.subplots(2, 2, figsize=(15, 12))
+        fig2.suptitle('Conversion Rates - Part 2/2', fontsize=16)
+        for idx, column in enumerate(columnsSelected[4:]):
+            process_demographic(column, ax=axes2.flatten()[idx])
+        plt.tight_layout()
+        plt.show()
+
+    def calculateOptimalContactTiming(self, per: str = 'all'):
+        success_data = self.data[self.data['y'] == 1].copy()
+        durationPerSub = success_data.groupby(per).agg({'y': 'count'})
+        print("Top converting call durations:")
+        print(durationPerSub.sort_values('y', ascending=False).head(10))
+        perOrder = []
+        if per == "month":
+            perOrder = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 
+                        'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+        elif per == 'day':
+            perOrder = [i for i in range(1, 32)]
+        success_data['month'] = pd.Categorical(success_data[per], 
+                                            categories=perOrder,
+                                            ordered=True)
+        plt.figure(figsize=(12, 6))
+        perDuration = success_data[per].value_counts().sort_index()
+        x = range(len(perDuration))
+        plt.plot(x, perDuration.values, marker='o', color='#4C72B0', 
+                linewidth=2, markersize=8)
+        plt.xticks(x, perDuration.index)
+        peak_idx = perDuration.argmax()
+        plt.annotate(f'Peak: {perDuration.index[peak_idx]}\n({perDuration.max()} conversions)',
+                    xy=(peak_idx, perDuration.max()),
+                    xytext=(15, 15), 
+                    textcoords='offset points',
+                    arrowprops=dict(arrowstyle='->', color='red'),
+                    bbox=dict(boxstyle='round,pad=0.5', fc='yellow', alpha=0.3))
+        plt.title(f'Optimal Contact Timing Analysis\n{per.capitalize()} Conversion Trends', pad=20, fontsize=14)
+        plt.xlabel(per.capitalize(), fontsize=12)
+        plt.ylabel('Conversions', fontsize=12)
+        plt.grid(axis='y', alpha=0.3)
+        plt.xticks(rotation=45)
+        avg_duration = success_data['duration'].mean()
+        plt.text(0.02, 0.95, 
+                f'Avg successful call duration: {avg_duration:.1f} seconds',
+                transform=plt.gca().transAxes,
+                bbox=dict(facecolor='white', alpha=0.8))
+        plt.tight_layout()
+        plt.show()
+        return {
+            'peak_{}'.format(per): perDuration.index[peak_idx],
+            'peak_conversions': perDuration.max(),
+            'avg_duration': avg_duration,
+            'top_durations': durationPerSub.sort_values('y', ascending=False).head(5).index.tolist()
+        }
+
+    def calculateCommunicationConversionRate(self, columnName:str):
+        """
+        Calculates and visualizes conversion rates for a single column.
+        
+        Args:
+            column (str): Column name to analyze
+            plot (bool): Whether to generate visualization (default True)
+        """
+        columnYesCount = self.data[self.data['y'] == 1].groupby(columnName).agg({'y': 'count'})\
+            .reset_index().set_index(columnName)
+        totalRecCount = self.data.groupby(columnName).agg({'y': 'count'})\
+            .reset_index().set_index(columnName)
+        columnYesCount['conversionRate'] = (columnYesCount['y'] / totalRecCount['y']) * 100
+        top_group = columnYesCount.sort_values('conversionRate', ascending=False)\
+            .reset_index().iloc[[0]][[columnName, 'conversionRate']]
+        print(f"{columnName}: Group {top_group[columnName].values[0]} has highest conversion rate {round(top_group['conversionRate'].values[0], 2)} %")
+        print("#-----------------------------------------------------------------#")
+        
+        plt.figure(figsize=(10, 5))
+        plot_data = columnYesCount.sort_values('conversionRate', ascending=False).head(10).reset_index()
+        sns.barplot(
+            x=columnName, 
+            y='conversionRate', 
+            data=plot_data, 
+            palette='coolwarm',
+            hue=columnName,  
+            legend=False
+        )  
+        plt.title(f'Conversion Rates by {columnName}')
+        plt.ylabel('Conversion Rate (%)')
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.show()
+        
+        return {
+            'column': columnName,
+            'top_group': top_group.to_dict('records')[0],
+            'conversion_rates': columnYesCount.reset_index().to_dict('records')
+        }
+
+        

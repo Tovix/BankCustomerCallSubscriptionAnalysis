@@ -1,10 +1,10 @@
-# Digital Marketing A/B Test Optimization Platform
+# Bank Customer Call Subscription Analysis
 
-> A comprehensive data science project focused on optimizing marketing campaigns through advanced A/B testing methodologies and statistical analysis.
+> A comprehensive data science project focused on analyzing bank customer call data to understand subscription patterns through advanced data cleaning pipelines and exploratory data analysis.
 
 [![Dataset](https://img.shields.io/badge/Dataset-UCI%20ML%20Repository-blue)](https://archive.ics.uci.edu/dataset/222/bank+marketing)
-[![Domain](https://img.shields.io/badge/Domain-Digital%20Marketing-green)](#)
-[![Analytics](https://img.shields.io/badge/Analytics-Campaign%20Optimization-orange)](#)
+[![Domain](https://img.shields.io/badge/Domain-Banking%20Analytics-green)](#)
+[![Analytics](https://img.shields.io/badge/Analytics-Customer%20Behavior-orange)](#)
 
 ## Table of Contents
 
@@ -14,20 +14,21 @@
 - [Key Features](#key-features)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Analysis Tasks](#analysis-tasks)
-- [Deliverables](#deliverables)
+- [Data Processing Pipeline](#data-processing-pipeline)
+- [Exploratory Data Analysis](#exploratory-data-analysis)
 - [Results](#results)
 - [Contributing](#contributing)
 
 ## Overview
 
-This project leverages the Bank Marketing Dataset to build a comprehensive A/B testing optimization platform for digital marketing campaigns. Using advanced statistical methods, Monte Carlo simulations, and machine learning techniques, we analyze customer behavior patterns and optimize marketing strategies for maximum conversion rates.
+This project analyzes bank customer call subscription data using a robust data cleaning pipeline and comprehensive exploratory data analysis (EDA). The system processes banking datasets to identify customer behavior patterns, subscription trends, and key factors influencing customer decisions.
 
 **Key Objectives:**
-- Identify optimal customer targeting strategies
-- Develop statistical frameworks for A/B testing
-- Build predictive models for campaign success
-- Create interactive dashboards for campaign analysis
+- Implement comprehensive data cleaning and optimization pipeline
+- Perform thorough exploratory data analysis on customer call data
+- Identify patterns in customer subscription behavior
+- Handle data quality issues including outliers and missing values
+- Optimize data types and memory usage for large datasets
 
 ## Dataset
 
@@ -65,26 +66,20 @@ This project leverages the Bank Marketing Dataset to build a comprehensive A/B t
 
 ```
 BankCustomerCallSubscriptionAnalysis/
-├── data/
-│   ├── raw/                    # Original dataset
-│   ├── processed/              # Cleaned and preprocessed data
-│   └── external/               # Additional data sources
-├── notebooks/
-│   ├── 01_eda.ipynb           # Exploratory Data Analysis
-│   ├── 02_statistical_analysis.ipynb
-│   └── 03_ab_testing.ipynb    # A/B Testing Analysis
-├── src/
-│   ├── ab_test_simulator.py    # Monte Carlo simulation engine
-│   ├── statistical_analysis.py # Power analysis & corrections
-│   ├── bayesian_ab_testing.py  # Bayesian A/B testing
-│   └── utils/                  # Helper functions
-├── sql/
-│   └── queries.sql            # Customer segmentation queries
-├── dashboard/
-│   └── streamlit_app.py       # Interactive dashboard
-├── reports/
-│   └── technical_report.pdf   # Comprehensive analysis
-├── requirements.txt
+├── Data/
+│   ├── bank/                   # Original bank marketing dataset
+│   │   ├── bank-full.csv      # Complete dataset
+│   │   ├── bank-names.txt     # Feature descriptions
+│   │   └── bank.csv           # Reduced dataset
+│   └── bank-additional/        # Additional dataset variations
+│       ├── bank-additional-full.csv
+│       ├── bank-additional-names.txt
+│       └── bank-additional.csv
+├── EDA/
+│   ├── main.py                # Main execution script
+│   ├── dataCleaningPipeline.py # Data cleaning and optimization pipeline
+│   ├── EDAAnalysis.py         # Exploratory data analysis implementation
+│   └── __pycache__/           # Python cache files
 └── README.md
 ```
 
@@ -106,8 +101,8 @@ BankCustomerCallSubscriptionAnalysis/
 - Which customer demographics show the highest conversion rates?
 - How do contact duration and campaign frequency correlate with subscription probability?
 - What is the optimal contact timing for maximizing conversions?
-- Which communication channels yield the best response rates?
 - How do economic indicators affect campaign success?
+- Which communication channels yield the best response rates?
 
 ### Task 2: SQL Analysis & Customer Segmentation 
 **Objective:** Build efficient queries for marketing campaign analysis and customer segmentation.
@@ -176,13 +171,6 @@ BankCustomerCallSubscriptionAnalysis/
 - **Conversion Rate Improvemen2. **Create virtual environment:**
    ```bash
    python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```t** - Projected increase in subscription rates
 - **Cost Optimization** - Reduced campaign costs through better targeting
 - **Revenue Growth** - Estimated financial impact of optimizations
 - **Testing Infrastructure** - Scalable framework for future experiments
