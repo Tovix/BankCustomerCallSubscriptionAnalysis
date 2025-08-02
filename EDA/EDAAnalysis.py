@@ -1,8 +1,10 @@
+import matplotlib
 import pandas as pd
 import seaborn as sns
-from typing import Dict
 import matplotlib.pyplot as plt
+from typing import Dict, Generator
 from abc import ABC, abstractmethod
+from AnalysisUtilis import AnalysisHelperFunctions
 
 class BaseEDAAnalyzer(ABC):
     """Abstract base class defining the complete interface for exploratory data analysis (EDA).
@@ -137,6 +139,7 @@ class BankEdaDataAnalyzer(BaseEDAAnalyzer):
         self.questions: Dict[str, str] = {}
         self.generalConclusions: Dict[str, str] = {}
         self.dataColsType: Dict[str, str] = {}
+        AnalysisHelperFunctions.figuresFilePath = 'Figures/'
 
     def categorizeDataColumnsTypes(self) -> None:
         """Classify columns as numeric or categorical.
@@ -155,7 +158,7 @@ class BankEdaDataAnalyzer(BaseEDAAnalyzer):
             [col for col, colType in self.dataColsType.items() if colType == 'categorical'], 
             'categorical'))
 
-    def generateDescriptiveStatistics(self) -> None:
+    def generateDescriptiveStatistics(self) -> list[matplotlib.pyplot]:
         """Calculate and display descriptive statistics.
         
         Shows statistics for all columns and visualizes numeric distributions.
@@ -164,29 +167,31 @@ class BankEdaDataAnalyzer(BaseEDAAnalyzer):
         if colType == 'numeric' or colType == 'categorical']
         for column in columns:
             print(self.data[column].describe())
-        self.data.select_dtypes(include='number').plot(
-            kind='hist',
-            subplots=True,
-            bins=50,
-            figsize=(12, 8),
-            layout=(-1, 3),
-            edgecolor='black',
-            grid=False,
-            density=True  
-        )
-        plt.figure(figsize=(12, 8))
-        cat_cols = self.data.select_dtypes(include='category').columns.drop('y', errors='ignore')
-        for i, col in enumerate(cat_cols, 1):
-            plt.subplot((len(cat_cols)+2)//3, 3, i)
-            pd.crosstab(self.data[col], self.data['y']).plot(
-                kind='bar',
-                stacked=True,
-                ax=plt.gca()
-            )
-            plt.title(f'{col} Distribution by Target')
-            plt.xticks(rotation=45)
-        plt.tight_layout()
-        plt.show()
+        
+        @AnalysisHelperFunctions.streamLitPlotDisplay   
+        def subHistogramPlot() -> None:
+            plt.figure(figsize=(12, 8))
+            self.data.select_dtypes(include='number').plot(kind='hist',subplots=True,bins=50,
+            layout=(-1, 3),edgecolor='black',grid=False, density=True)
+            AnalysisHelperFunctions.savePlotFigure("NumericalColumnsHistograms.png")
+            plt.tight_layout()
+        
+        subHistogramPlot()
+        
+        @AnalysisHelperFunctions.streamLitPlotDisplay   
+        def categoricalSubPlot() -> None: 
+            plt.figure(figsize=(12, 8))
+            cat_cols = self.data.select_dtypes(include='category').columns.drop('y', errors='ignore')
+            for i, col in enumerate(cat_cols, 1):
+                plt.subplot((len(cat_cols)+2)//3, 3, i)
+                pd.crosstab(self.data[col], self.data['y']).plot(kind='bar',stacked=True, ax=plt.gca())
+                plt.title(f'{col} Distribution by Target')
+                plt.xticks(rotation=45)
+            AnalysisHelperFunctions.savePlotFigure("CategoricalColumnsHistograms.png")
+            plt.tight_layout()
+
+        categoricalSubPlot()
+        
 
 
     def generateCorrelationMatrix(self) -> pd.DataFrame:
@@ -198,28 +203,21 @@ class BankEdaDataAnalyzer(BaseEDAAnalyzer):
         self.data['y'] = self.data['y'].map({True: 1, False: 0}).astype('int8')
         corrMatrix = self.data.select_dtypes(include='number').corr()
         
-        heatmap = sns.heatmap(
-            corrMatrix,
-            annot=True,            
-            fmt=".1f",             
-            cmap="coolwarm",       
-            vmin=-1, vmax=1,       
-            linewidths=1,          
-            linecolor='black',     
-            square=True,           
-            cbar=False,            
-            annot_kws={"size": 12, "color": "black"}  
-        )
-        plt.title("BANK DATA CORRELATIONS", fontsize=14, weight='bold', pad=20)
-        plt.xticks(fontsize=10, rotation=45)
-        plt.yticks(fontsize=10, rotation=0)
-        cbar = plt.colorbar(heatmap.collections[0])
-        cbar.set_label('Correlation Strength', rotation=270, labelpad=15)
-        plt.tight_layout()
-        plt.show()
+        @AnalysisHelperFunctions.streamLitPlotDisplay
+        def correlationHeatmap(corrMatrix: pd.DataFrame) -> None:
+            plt.figure(figsize=(12, 8))
+            heatmap = sns.heatmap(corrMatrix,annot=True,fmt=".1f",cmap="coolwarm",vmin=-1, vmax=1,linewidths=1,          
+            linecolor='black',square=True,cbar=False,annot_kws={"size": 12, "color": "black"})
+            plt.title("Bank Data Correlations", fontsize=14, weight='bold', pad=20)
+            plt.xticks(fontsize=10, rotation=45)
+            plt.yticks(fontsize=10, rotation=0)
+            cbar = plt.colorbar(heatmap.collections[0])
+            cbar.set_label('Correlation Strength', rotation=270, labelpad=15)
+            plt.tight_layout()
+        correlationHeatmap(corrMatrix)
         
         return corrMatrix
-
+    @AnalysisHelperFunctions.streamlitPrintOutput
     def addConclusion(self, key: str, conclusion: str) -> None:
         """Store analytical findings.
         
@@ -228,6 +226,7 @@ class BankEdaDataAnalyzer(BaseEDAAnalyzer):
             conclusion: Textual description of the insight.
         """
         self.generalConclusions[key] = conclusion
+        print(conclusion)
     
     def answerQuestion(self, question: str, answer: str) -> None:
         self.questions[question] = answer
@@ -248,7 +247,7 @@ class BankEdaDataAnalyzer(BaseEDAAnalyzer):
             columnsSelected = ['age', 'job', 'marital', 'education', 'default', 'balanceGroup', 'housing', 'loan']
         elif ColsType == "Economic":
             columnsSelected = ['balanceGroup', 'default', 'housing', 'loan', 'job']
-        def process_demographic(column, ax=None):
+        def ProcessColumns(column, ax=None):
             """Helper function to process each columns group"""
             if column == 'y':
                 return
@@ -266,62 +265,63 @@ class BankEdaDataAnalyzer(BaseEDAAnalyzer):
                 .reset_index().iloc[[0]][[column, 'conversionRate']]
             print(f"{column}: Group {conversionRate[column][column].values[0]} has highest conversion rate {round(conversionRate[column]['conversionRate'].values[0], 2)} %")
             print("#-----------------------------------------------------------------#")
-        fig1, axes1 = plt.subplots(2, 2, figsize=(15, 12))
-        fig1.suptitle('Conversion Rates - Part 1/2', fontsize=16)
-        for idx, column in enumerate(columnsSelected[:4]):
-            process_demographic(column, ax=axes1.flatten()[idx])
-        plt.tight_layout()
-        plt.show()
-        fig2, axes2 = plt.subplots(2, 2, figsize=(15, 12))
-        fig2.suptitle('Conversion Rates - Part 2/2', fontsize=16)
-        for idx, column in enumerate(columnsSelected[4:]):
-            process_demographic(column, ax=axes2.flatten()[idx])
-        plt.tight_layout()
-        plt.show()
+
+        @AnalysisHelperFunctions.streamLitPlotDisplay
+        def displaySubPlotsPerSet(columnsSelected: list[str]):
+            fig, axes = plt.subplots(2, 2, figsize=(15, 12))
+            fig.suptitle('Conversion Rates', fontsize=16)
+            for idx, column in enumerate(columnsSelected):
+                ProcessColumns(column, ax=axes.flatten()[idx])
+            plt.tight_layout()
+            
+        displaySubPlotsPerSet(columnsSelected[:4])
+        displaySubPlotsPerSet(columnsSelected[4:])
 
     def calculateOptimalContactTiming(self, per: str = 'all'):
-        success_data = self.data[self.data['y'] == 1].copy()
-        durationPerSub = success_data.groupby(per).agg({'y': 'count'})
+        successData = self.data[self.data['y'] == 1].copy()
+        durationPerSub = successData.groupby(per).agg({'y': 'count'})
         print("Top converting call durations:")
         print(durationPerSub.sort_values('y', ascending=False).head(10))
         perOrder = []
         if per == "month":
-            perOrder = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 
-                        'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+            perOrder = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul',
+                        'aug', 'sep', 'oct', 'nov', 'dec']
         elif per == 'day':
             perOrder = [i for i in range(1, 32)]
-        success_data['month'] = pd.Categorical(success_data[per], 
-                                            categories=perOrder,
-                                            ordered=True)
-        plt.figure(figsize=(12, 6))
-        perDuration = success_data[per].value_counts().sort_index()
-        x = range(len(perDuration))
-        plt.plot(x, perDuration.values, marker='o', color='#4C72B0', 
-                linewidth=2, markersize=8)
-        plt.xticks(x, perDuration.index)
-        peak_idx = perDuration.argmax()
-        plt.annotate(f'Peak: {perDuration.index[peak_idx]}\n({perDuration.max()} conversions)',
-                    xy=(peak_idx, perDuration.max()),
-                    xytext=(15, 15), 
-                    textcoords='offset points',
-                    arrowprops=dict(arrowstyle='->', color='red'),
-                    bbox=dict(boxstyle='round,pad=0.5', fc='yellow', alpha=0.3))
-        plt.title(f'Optimal Contact Timing Analysis\n{per.capitalize()} Conversion Trends', pad=20, fontsize=14)
-        plt.xlabel(per.capitalize(), fontsize=12)
-        plt.ylabel('Conversions', fontsize=12)
-        plt.grid(axis='y', alpha=0.3)
-        plt.xticks(rotation=45)
-        avg_duration = success_data['duration'].mean()
-        plt.text(0.02, 0.95, 
-                f'Avg successful call duration: {avg_duration:.1f} seconds',
-                transform=plt.gca().transAxes,
-                bbox=dict(facecolor='white', alpha=0.8))
-        plt.tight_layout()
-        plt.show()
+        successData['month'] = pd.Categorical(successData[per], categories=perOrder, ordered=True)
+        
+        @AnalysisHelperFunctions.streamLitPlotDisplay
+        def PlotTimeSeriesGraph():
+            plt.figure(figsize=(12, 6))
+            perDuration = successData[per].value_counts().sort_index()
+            x = range(len(perDuration))
+            plt.plot(x, perDuration.values, marker='o', color='#4C72B0', 
+                    linewidth=2, markersize=8)
+            plt.xticks(x, perDuration.index)
+            peak_idx = perDuration.argmax()
+            plt.annotate(f'Peak: {perDuration.index[peak_idx]}\n({perDuration.max()} conversions)',
+                        xy=(peak_idx, perDuration.max()),
+                        xytext=(15, 15), 
+                        textcoords='offset points',
+                        arrowprops=dict(arrowstyle='->', color='red'),
+                        bbox=dict(boxstyle='round,pad=0.5', fc='yellow', alpha=0.3))
+            plt.title(f'Optimal Contact Timing Analysis\n{per.capitalize()} Conversion Trends', pad=20, fontsize=14)
+            plt.xlabel(per.capitalize(), fontsize=12)
+            plt.ylabel('Conversions', fontsize=12)
+            plt.grid(axis='y', alpha=0.3)
+            plt.xticks(rotation=45)
+            avgDuration = successData['duration'].mean()
+            plt.text(0.02, 0.95, 
+                    f'Avg successful call duration: {avgDuration:.1f} seconds',
+                    transform=plt.gca().transAxes,
+                    bbox=dict(facecolor='white', alpha=0.8))
+            plt.tight_layout()
+            return perDuration, avgDuration
+        perDuration, avgDuration = PlotTimeSeriesGraph()
         return {
-            'peak_{}'.format(per): perDuration.index[peak_idx],
+            'peak_{}'.format(per): perDuration.index[perDuration.argmax()],
             'peak_conversions': perDuration.max(),
-            'avg_duration': avg_duration,
+            'avg_duration': avgDuration,
             'top_durations': durationPerSub.sort_values('y', ascending=False).head(5).index.tolist()
         }
 
@@ -338,31 +338,35 @@ class BankEdaDataAnalyzer(BaseEDAAnalyzer):
         totalRecCount = self.data.groupby(columnName).agg({'y': 'count'})\
             .reset_index().set_index(columnName)
         columnYesCount['conversionRate'] = (columnYesCount['y'] / totalRecCount['y']) * 100
-        top_group = columnYesCount.sort_values('conversionRate', ascending=False)\
+        topGroup = columnYesCount.sort_values('conversionRate', ascending=False)\
             .reset_index().iloc[[0]][[columnName, 'conversionRate']]
-        print(f"{columnName}: Group {top_group[columnName].values[0]} has highest conversion rate {round(top_group['conversionRate'].values[0], 2)} %")
+        print(f"{columnName}: Group {topGroup[columnName].values[0]} has highest conversion rate {round(topGroup['conversionRate'].values[0], 2)} %")
         print("#-----------------------------------------------------------------#")
         
-        plt.figure(figsize=(10, 5))
-        plot_data = columnYesCount.sort_values('conversionRate', ascending=False).head(10).reset_index()
-        sns.barplot(
-            x=columnName, 
-            y='conversionRate', 
-            data=plot_data, 
-            palette='coolwarm',
-            hue=columnName,  
-            legend=False
-        )  
-        plt.title(f'Conversion Rates by {columnName}')
-        plt.ylabel('Conversion Rate (%)')
-        plt.xticks(rotation=45)
-        plt.tight_layout()
-        plt.show()
+        @AnalysisHelperFunctions.streamLitPlotDisplay
+        def plotCommunicationConversionRate(columnName:str, columnCount: pd.DataFrame):
+            plt.figure(figsize=(12, 7))
+            plot_data = columnCount.sort_values('conversionRate', ascending=False).head(10).reset_index()
+            sns.barplot(x=columnName, y='conversionRate', data=plot_data, palette='coolwarm',
+            hue=columnName, legend=False)  
+            plt.title(f'Conversion Rates by {columnName}')
+            plt.ylabel('Conversion Rate (%)')
+            plt.xticks(rotation=45)
+            plt.tight_layout()
+        plotCommunicationConversionRate(columnName, columnYesCount)
         
         return {
             'column': columnName,
-            'top_group': top_group.to_dict('records')[0],
+            'top_group': topGroup.to_dict('records')[0],
             'conversion_rates': columnYesCount.reset_index().to_dict('records')
         }
+    
+    def generateQuestions(self) -> Generator[str, None, None]:
+        for key in self.questions.keys():
+            yield key
+    
+    def generateAnswers(self) -> Generator[str, None, None]:
+        for value in self.questions.values():
+            yield value
 
         

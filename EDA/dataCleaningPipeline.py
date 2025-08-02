@@ -3,7 +3,7 @@ import seaborn as sns
 from typing import Self
 import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
-
+from AnalysisUtilis import AnalysisHelperFunctions
 
 class BaseDataOptimizationPipeline(ABC):
     """Abstract base class defining the interface for data optimization pipelines."""
@@ -102,6 +102,7 @@ class BankDataOptimizationPipeline(BaseDataOptimizationPipeline):
         DataFrame (pd.DataFrame): The processed DataFrame after all transformations
     """
     
+    @AnalysisHelperFunctions.streamlitPrintOutput
     def __init__(self, dataPath: str, delimiter: str) -> None:
         """Initializes the pipeline and executes the full processing sequence.
         
@@ -129,8 +130,13 @@ class BankDataOptimizationPipeline(BaseDataOptimizationPipeline):
         self.dataPath = dataPath
         try:
             self.DataFrame = pd.read_csv(filepath_or_buffer=self.dataPath, delimiter=delimiter)
+            print("Data Info Before Cleaning:")
+            print("#" * 80)
+            print(self.DataFrame.info())
             self._removeOutliers()._dropDuplicates()._getUniqueValues()._optimizeDataTypes()
-            self.DataFrame.info()
+            print("Data Info After Cleaning:")
+            print("#" * 80)
+            print(self.DataFrame.info())
         except Exception as e:
             print("error: {}".format(e))
     
@@ -217,9 +223,9 @@ class BankDataOptimizationPipeline(BaseDataOptimizationPipeline):
         """
         columns = self.DataFrame.columns
         for column in columns:
-            print("Column: {}".format(column))
-            print("Unique values: {}".format(self.DataFrame[column].unique()))
-            print("-" * 150)
+            print("Column: {} with n-unique {} value(s)".format(column, self.DataFrame[column].nunique()))
+            print("Unique values: {}".format(self.DataFrame[column].unique()[0:10]))
+            print("-" * 100)
         return self
     
     def _optimizeDataTypes(self) -> Self:
