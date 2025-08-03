@@ -1,6 +1,5 @@
 import psycopg2
 import pandas as pd
-import seaborn as sns
 from typing import List
 import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
@@ -195,43 +194,68 @@ class BankDataSqlIntegration(DataSqlIntegration):
                         raise e
 
 
-      def plotConversionRates(self, resultsDF: pd.DataFrame, y: str) -> plt:
+      def plotConversionRates(self, resultsDf: pd.DataFrame, yColumns: list) -> plt.Figure:
             """
-            Display professional conversion rate analysis with visualization
-            
+            Display conversion rate analysis for single or multiple segment columns.
+
             Args:
-                  resultsDF: DataFrame containing columns:
-                              - job
-                              - response_count
-                              - total_response_count  
-                              - conversion_rate_percentage
+                  resultsDf: DataFrame containing:
+                        - segment columns (specified in yColumns)
+                        - responseCount
+                        - totalResponseCount  
+                        - conversion_rate_percentage
+                  yColumns: List of column names to group by (e.g., ['job', 'education'])
+
+            Returns:
+                  matplotlib.pyplot.Figure: Professional visualization of conversion rates
+
+            Example:
+                  plotConversionRates(df, yColumns=['job'])  # Single segment
+                  plotConversionRates(df, yColumns=['job', 'marital'])  # Multi-segment
             """
-            # Sort by conversion rate
-            resultsDF = resultsDF.sort_values('conversion_rate_percentage', ascending=True)
-            
+            # Create composite key if multiple columns
+            if len(yColumns) > 1:
+                  resultsDf['compositeSegment'] = resultsDf[yColumns].apply(
+                        lambda row: ' | '.join(row.values.astype(str)), axis=1)
+                  yVar = 'compositeSegment'
+            else:
+                  yVar = yColumns[0]
+
+            # Sort and filter top performers
+            resultsDf = resultsDf.sort_values('conversion_rate_percentage', ascending=True)
+
+            # Normalize values for colormap (must be between 0 and 1)
+            conv_rates = pd.to_numeric(resultsDf['conversion_rate_percentage'], errors='coerce')
+            normed_colors = (conv_rates / 100).fillna(0).clip(0, 1).to_numpy()
+            colors = plt.cm.viridis(normed_colors)
+
             # Create plot
-            plt.figure(figsize=(10, 6))
-            ax = sns.barplot(
-                  data=resultsDF,
-                  y=y,
-                  x='conversion_rate_percentage',
-                  palette='viridis',
+            fig, ax = plt.subplots(figsize=(10, max(6, len(resultsDf) * 0.4)))
+            bars = ax.barh(
+                  resultsDf[yVar],
+                  resultsDf['conversion_rate_percentage'],
+                  color=colors,
                   edgecolor='black'
             )
-            
+
             # Customize plot
-            plt.title('Conversion Rates by Customer Segment', fontsize=14, pad=20)
-            plt.xlabel('Conversion Rate (%)', fontsize=12)
-            plt.ylabel('Job Segment', fontsize=12)
-            plt.grid(axis='x', linestyle='--', alpha=0.7)
-            
-            # Add value labels
-            for p in ax.patches:
+            title = 'Conversion Rates by ' + ' + '.join(yColumns)
+            ax.set_title(title, fontsize=14, pad=20)
+            ax.set_xlabel('Conversion Rate (%)', fontsize=12)
+            ax.set_ylabel(' | '.join(yColumns), fontsize=12)
+            ax.grid(axis='x', linestyle='--', alpha=0.7)
+
+            # Add value labels and performance tiers
+            for p in bars:
                   width = p.get_width()
-                  ax.text(width + 0.5, p.get_y() + p.get_height()/2.,
+                  ax.text(width + 0.5, p.get_y() + p.get_height() / 2.,
                         f'{width:.1f}%',
                         ha='left', va='center', fontsize=10)
-            
-            # Display in Streamlit
-            plt.show()
-            return plt
+
+                  # Add performance tier indicators
+                  if width > 30:
+                        ax.text(3, p.get_y() + p.get_height() / 2., '★',
+                              ha='left', va='center', color='gold', fontsize=14)
+
+            plt.tight_layout()
+            return fig

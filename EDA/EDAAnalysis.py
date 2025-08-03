@@ -228,7 +228,7 @@ class BankEdaDataAnalyzer(BaseEDAAnalyzer):
         self.generalConclusions[key] = conclusion
         print(conclusion)
     
-    def answerQuestion(self, question: str, answer: str) -> None:
+    def answerQuestion(self, question: str, answer: str | list) -> None:
         self.questions[question] = answer
     
     def calculateConversionRate(self, ColsType: str = "Demographic"):

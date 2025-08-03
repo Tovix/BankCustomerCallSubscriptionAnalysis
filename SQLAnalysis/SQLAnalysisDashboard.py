@@ -32,7 +32,7 @@ if __name__ == '__main__':
       analyzer = BankEdaDataAnalyzer(data=data)
       #endregion
 
-      # region Question One
+      #region Question One
       questionOneQuery = """
       DROP VIEW IF EXISTS YesResponseCount;
       DROP VIEW IF EXISTS ResponseCount;
@@ -101,7 +101,7 @@ if __name__ == '__main__':
       analyzer.answerQuestion("Q1: Which customer segments have the highest conversion rates?", questionOneConc)
       #endregion
       
-      # region Question Two
+      #region Question Two
       questionTwoQueryOne = """
             DROP VIEW IF EXISTS YesResponseCount;
             DROP VIEW IF EXISTS ResponseCount;
@@ -184,9 +184,7 @@ if __name__ == '__main__':
             ORDER BY
                   conversion_rate_percentage DESC
       """
-      
-      questionTwoConc = """
-      
+      contactAnalysis = """
             ### Campaign Effectiveness by Contact Method
 
             **Key Findings:**
@@ -216,7 +214,10 @@ if __name__ == '__main__':
 
             **Performance Summary:**
             - **3.3x** difference between top and bottom performing channels
-            - **7.5x** more conversions from cellular vs telephone at similar contact-to-conversion ratios
+            - **7.5x** more conversions from cellular vs telephone at similar contact-to-conversion ratios      
+            """
+      monthAnalysis = """
+            
             
             ### Campaign Performance by Month
 
@@ -247,66 +248,214 @@ if __name__ == '__main__':
             - **Top 3 months** account for **35.7%** of total conversions despite representing only **15.2%** of total contacts
             
             """
+      questionTwoConc = [contactAnalysis, monthAnalysis]
       analyzer.answerQuestion("Q2: What is the campaign effectiveness by contact method and timing?", questionTwoConc)
       #endregion
       
       #region Question Three
-      questionThreeConc = """
-      
+      questionFourQueryOne = """
+            SELECT
+                  job,
+                  marital,
+                  education,
+                  SUM(CASE WHEN y = 'True' THEN 1 ELSE 0 END) as conversions,
+                  ROUND((100 * (SUM(CASE WHEN y = 'True' THEN 1 ELSE 0 END)) / COUNT(*)), 2) as conversion_rate_percentage
+            FROM 
+                  bank_marketing
+            GROUP BY
+                  job,
+                  marital,
+                  education
+            ORDER BY
+                  conversion_rate_percentage DESC
+            LIMIT 10
       """
-      analyzer.answerQuestion("Q3: How do economic indicators correlate with campaign success?", questionThreeConc)
+      questionFourQueryTwo = """
+            SELECT
+                  housing,
+                  loan,
+                  has_default,
+                  CASE
+                        WHEN balance > 4000 THEN 'more than 4000$'
+                        WHEN balance BETWEEN 2000 AND 4000 THEN 'between 2000$ and 4000$'
+                              WHEN balance BETWEEN 0 AND 2000 THEN 'less than 2000$'
+                        ELSE 'less than 0$ (-ve balance)'
+                  END AS balanceCategory,
+                  SUM(CASE WHEN y = 'True' THEN 1 ELSE 0 END) as conversions,
+                  ROUND((100 * (SUM(CASE WHEN y = 'True' THEN 1 ELSE 0 END)) / COUNT(*)), 2) as conversion_rate_percentage
+            FROM 
+                  bank_marketing
+            GROUP BY
+                  housing,
+                  loan,
+                  has_default,
+                  balanceCategory
+            ORDER BY
+                  conversion_rate_percentage DESC
+            LIMIT 10 
+      """
+      questionFourQueryThree = """
+            SELECT
+                  CASE
+                        WHEN age >= 50 THEN 'older than 50'
+                        WHEN age BETWEEN 20 AND 50 THEN 'between 20 and 50'
+					WHEN age BETWEEN 0 AND 20 THEN 'younger than 20'
+                        ELSE 'unknown'
+                  END AS AgeCategory,
+                  SUM(CASE WHEN y = 'True' THEN 1 ELSE 0 END) as conversions,
+                  ROUND((100 * (SUM(CASE WHEN y = 'True' THEN 1 ELSE 0 END)) / COUNT(*)), 2) as conversion_rate_percentage
+            FROM 
+                  bank_marketing
+            GROUP BY
+                  AgeCategory
+            ORDER BY
+                  conversion_rate_percentage DESC
+      """
+      profileAnalysis = """
+            ### Most Promising Customer Profiles
+
+            **1. Highest Converting Segments**  
+            - **Students (100% conversion)**:  
+            - Married students with primary education show perfect conversion (100%)  
+            - All student segments dominate top 8 positions  
+            - Particularly strong with primary (100%) and unknown (30%) education  
+
+            **2. Retirees Performance**  
+            - **Divorced retirees (40%)**:  
+            - Second highest converting group overall  
+            - Consistent performance across education levels (31-40%)  
+
+            **3. Demographic Patterns**  
+            - **Marital status impact**:  
+            - Married students outperform single students (100% vs 27-30%)  
+            - Divorced individuals show strong conversion across segments  
+
+            **4. Education Level Trends**  
+            - **Primary education leads**:  
+            - Highest rates in both student (100%) and self-employed (25%) segments  
+            - Tertiary education shows variability (33-42%)  
+
+            **Strategic Recommendations**:  
+            1. **Prioritize student outreach**, especially married students  
+            2. **Develop targeted campaigns** for divorced retirees  
+            3. **Test primary education messaging** with other segments  
+            4. **Investigate unknown education segment** (30% conversion)  
+            5. **Optimize single student approaches** to match married student success  
+
+            **Performance Summary**:  
+            - **4:1 ratio** between top and bottom segments  
+            - Student segments account for **70%** of top 10 positions  
+            - Married status boosts conversion by **3.7x** vs single in student segment  
+            """
+      financialAnalysis = """
+            ### Most Promising Financial Profiles
+
+            **1. Highest Converting Segments**  
+            - **Debt-free customers with high balances (37%)**:  
+            - No housing/loans/defaults + >$4000 balance converts best  
+            - 2.6x higher conversion than average (14%)  
+
+            **2. Financial Stability Patterns**  
+            - **Balance is key predictor**:  
+            - >$4000: 28-37%  
+            - $2000-$4000: 6-22%  
+            - <$2000: 4-14%  
+            - **Default status impact**:  
+            - Customers without defaults convert 3x better (22% vs 4-5%)  
+
+            **3. Debt Burden Impact**  
+            - **Housing loans reduce conversion**:  
+            - 28% (with mortgage) vs 37% (without) at high balance  
+            - 6% (with mortgage) vs 22% (without) at mid-range balance  
+
+            **Strategic Recommendations**:  
+            1. **Premium targeting**: Focus on >$4000 balance customers without debt  
+            2. **Debt mitigation offers**: Special terms for customers with housing loans  
+            3. **Balance-building campaigns**: Incentivize deposits to move customers into higher balance tiers  
+            4. **Default risk interventions**: Develop programs to prevent account defaults  
+            5. **Tiered messaging**: Customize offers by balance ranges  
+
+            **Performance Summary**:  
+            - **9:1 ratio** between top and bottom segments  
+            - Debt-free customers represent **83%** of top-performing segments  
+            - Balance has **stronger impact** than debt status (>4000$ with debt outperforms <2000$ without)  
+            """
+      ageAnalysis = """
+            ### Most Promising Age Segments
+
+            **1. Highest Converting Segment**  
+            - **Younger than 20 (40% conversion)**:  
+            - Outperforms other age groups by 4.4x  
+            - Despite smaller sample size (1,242 conversions)  
+
+            **2. Age Performance Trends**  
+            - **Sharp decline with age**:  
+            - 20-50 years: 7% conversion  
+            - 50+ years: 9% conversion  
+            - **Inverse volume relationship**:  
+            - Highest converting segment has lowest absolute conversions  
+            - Lowest converting segment (20-50) drives 75% of total conversions  
+
+            **Strategic Recommendations**:  
+            1. **Youth-focused campaigns**: Develop products tailored for <20 demographic  
+            2. **Life-stage messaging**:  
+            - For 20-50: Focus on family/financial planning needs  
+            - For 50+: Retirement income solutions  
+            3. **Channel optimization**:  
+            - Digital channels for younger segments  
+            - Traditional channels for older demographics  
+            4. **New customer acquisition**: Prioritize <20 segment given exceptional conversion  
+
+            **Performance Summary**:  
+            - **5.7:1 ratio** between top and bottom segments  
+            - <20 segment converts **5.1x better** than core 20-50 demographic  
+            - Despite high conversion, <20 represents only **0.6%** of total conversions  
+            """
+      questionFourConc = [
+            profileAnalysis,
+            financialAnalysis,
+            ageAnalysis]
+      
+      analyzer.answerQuestion("Q3: Which customer profiles show the most promising opportunities?", questionFourConc)
       #endregion
       
-      #region Question Four
-      questionFourConc = """
-      
-      """
-      analyzer.answerQuestion("Q4: Which customer profiles show the most promising opportunities?", questionFourConc)
-      #endregion
-      
-      #region Question Five
-      questionFiveConc = """
-      
-      """
-      analyzer.answerQuestion("Q5: What are the differences between successful and unsuccessful contacts?", questionFiveConc)
-      #endregion
+
 
       questions = analyzer.generateQuestions()
       answers = analyzer.generateAnswers()
+      def answerSQLQuestion(connection:psycopg2.connect, queryString:str, y:list) -> None:
+            df = bankDataSqlIntegration.answerQueryAnswer(connection=connection,
+            queryString=queryString, index=data.index)
+            st.dataframe(df)
+            st.pyplot(bankDataSqlIntegration.plotConversionRates(df, yColumns=y))
+      
+      
       # Q1
       st.subheader(next(questions))
-      df = bankDataSqlIntegration.answerQueryAnswer(connection=connection,
-      queryString=questionOneQuery, index=data.index)
-      st.dataframe(df)
-      st.pyplot(bankDataSqlIntegration.plotConversionRates(df, y='job'))
+      answerSQLQuestion(connection=connection,
+      queryString=questionOneQuery, y=['job'])
       st.markdown(next(answers))
 
       # Q2
+      concList = next(answers)
       st.subheader(next(questions))
-      df = bankDataSqlIntegration.answerQueryAnswer(connection=connection,
-      queryString=questionTwoQueryOne, index=data.index)
-      st.dataframe(df)
-      st.pyplot(bankDataSqlIntegration.plotConversionRates(df, y='contact'))
-      df = bankDataSqlIntegration.answerQueryAnswer(connection=connection,
-      queryString=questionTwoQueryTwo, index=data.index)
-      st.dataframe(df)
-      st.pyplot(bankDataSqlIntegration.plotConversionRates(df, y='month'))
-      st.markdown(next(answers))
+      answerSQLQuestion(connection=connection,
+      queryString=questionTwoQueryOne, y=['contact'])
+      st.markdown(concList[0])
+      answerSQLQuestion(connection=connection,
+      queryString=questionTwoQueryTwo, y=['month'])
+      st.markdown(concList[1])
 
-      # Q3
+      # Q3:
       st.subheader(next(questions))
-      df = bankDataSqlIntegration.answerQueryAnswer(connection=connection,
-      queryString=questionTwoQueryTwo, index=data.index)
-      st.dataframe(df)
-      st.pyplot(bankDataSqlIntegration.plotConversionRates(df, y='month'))
-      st.markdown(next(answers))
-
-      # # Q4:
-      # st.subheader(next(questions))
-      # analyzer.calculateConversionRate("Economic")
-      # st.markdown(next(answers))
+      concList = next(answers)
+      answerSQLQuestion(connection=connection,
+      queryString=questionFourQueryOne, y=['job', 'marital', 'education'])
+      st.markdown(concList[0])
+      answerSQLQuestion(connection=connection,
+      queryString=questionFourQueryTwo, y=['housing', 'loan', 'has_default', 'balancecategory'])
+      st.markdown(concList[1])
+      answerSQLQuestion(connection=connection,
+      queryString=questionFourQueryThree, y=['agecategory'])
+      st.markdown(concList[2])
       
-      # # Q5:
-      # st.subheader(next(questions))
-      # analyzer.calculateCommunicationConversionRate('contact')
-      # st.markdown(next(answers))

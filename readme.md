@@ -115,9 +115,7 @@ BankCustomerCallSubscriptionAnalysis/
 **Key Questions:**
 - Which customer segments have the highest conversion rates?
 - What is the campaign effectiveness by contact method and timing?
-- How do economic indicators correlate with campaign success?
 - Which customer profiles show the most promising opportunities?
-- What are the differences between successful and unsuccessful contacts?
 
 ### Task 3: A/B Test Simulator & Statistical Analysis 
 **Objective:** Build Monte Carlo simulations for A/B testing with comprehensive statistical validation.
