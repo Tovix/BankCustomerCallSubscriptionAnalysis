@@ -4,7 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from typing import Dict, Generator
 from abc import ABC, abstractmethod
-from AnalysisUtilis import AnalysisHelperFunctions
+from .AnalysisUtilis import AnalysisHelperFunctions
 
 class BaseEDAAnalyzer(ABC):
     """Abstract base class defining the complete interface for exploratory data analysis (EDA).

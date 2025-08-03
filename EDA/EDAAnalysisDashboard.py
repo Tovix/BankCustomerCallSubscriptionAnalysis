@@ -6,7 +6,7 @@ from dataCleaningPipeline import BankDataOptimizationPipeline
 if __name__ == "__main__":
     
     # region Introduction
-    st.title("Bank Customer Call Subscription Analysis")
+    st.title("Bank Customer Call Subscription EDA Analysis")
     st.subheader("https://archive.ics.uci.edu/dataset/222/bank+marketing")
     st.header("Preliminary Data cleaning to check for nulls, duplicates or any anomalies in the data")
     st.text("We will begin by checking the data for any duplicates or any null values and if found in case of "
@@ -16,6 +16,7 @@ if __name__ == "__main__":
     
     #region init Data
     data = BankDataOptimizationPipeline('Data/bank/bank-full.csv', ';').DataFrame
+    st.dataframe(data)
     analyzer = BankEdaDataAnalyzer(data)
     st.subheader("Conclusion:")
     st.text("After the Preliminary Data cleaning we didn't find neither duplicates nor nulls and the data seems " 

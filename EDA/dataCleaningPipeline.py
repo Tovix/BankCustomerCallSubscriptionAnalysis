@@ -133,7 +133,8 @@ class BankDataOptimizationPipeline(BaseDataOptimizationPipeline):
             print("Data Info Before Cleaning:")
             print("#" * 80)
             print(self.DataFrame.info())
-            self._removeOutliers()._dropDuplicates()._getUniqueValues()._optimizeDataTypes()
+            self._removeOutliers()._dropDuplicates()._getUniqueValues()._optimizeDataTypes(
+                )._saveOptimizedData("Data/bank/optimizedBankData.csv")
             print("Data Info After Cleaning:")
             print("#" * 80)
             print(self.DataFrame.info())
@@ -345,7 +346,7 @@ class BankDataOptimizationPipeline(BaseDataOptimizationPipeline):
     
     def _saveOptimizedData(self, output_path: str) -> Self:
         """Save processed data to disk."""
-        print("Not implemented yet: _saveOptimizedData")
+        self.DataFrame.to_csv(output_path, index=False)
         return self
     
     def _calculateMemorySavings(self) -> dict:
