@@ -419,8 +419,6 @@ if __name__ == '__main__':
       analyzer.answerQuestion("Q3: Which customer profiles show the most promising opportunities?", questionFourConc)
       #endregion
       
-
-
       questions = analyzer.generateQuestions()
       answers = analyzer.generateAnswers()
       def answerSQLQuestion(connection:psycopg2.connect, queryString:str, y:list) -> None:
