@@ -1,10 +1,15 @@
 import matplotlib
+import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from typing import Dict, Generator
 from abc import ABC, abstractmethod
+from scipy.stats import fisher_exact
+from statsmodels.stats.power import NormalIndPower
 from .AnalysisUtilis import AnalysisHelperFunctions
+from statsmodels.stats.proportion import proportion_effectsize
+
 
 class BaseEDAAnalyzer(ABC):
     """Abstract base class defining the complete interface for exploratory data analysis (EDA).
@@ -191,8 +196,8 @@ class BankEdaDataAnalyzer(BaseEDAAnalyzer):
             plt.tight_layout()
 
         categoricalSubPlot()
-        
-
+    
+    
 
     def generateCorrelationMatrix(self) -> pd.DataFrame:
         """Compute and visualize feature correlations.
@@ -360,6 +365,178 @@ class BankEdaDataAnalyzer(BaseEDAAnalyzer):
             'top_group': topGroup.to_dict('records')[0],
             'conversion_rates': columnYesCount.reset_index().to_dict('records')
         }
+    
+    
+    def sampleSizeEstimation(self, increaseRate: float, alpha: float, power: float) -> int:
+        baselineRate = self.data[self.data['y'] == 1]['y'].count() / self.data['y'].count()  
+        targetRate = baselineRate * increaseRate  
+        effectSize = proportion_effectsize(baselineRate, targetRate)
+        analysis = NormalIndPower()
+        sampleSize = analysis.solve_power(effect_size=effectSize, power=power, alpha=alpha, ratio=1,
+        alternative='two-sided')
+        
+        @AnalysisHelperFunctions.streamLitPlotDisplay
+        def plotSampleSizePerPower():
+            powers = np.linspace(0.7, 0.99, 30)
+            plt.plot(powers, [analysis.solve_power(effect_size=effectSize, power=p, alpha=alpha) for p in powers])
+            plt.xlabel("Statistical Power")
+            plt.ylabel("Sample Size per Group")
+            plt.title("Sample Size vs Power (20% Increase in Conversion)")
+            plt.grid(True)
+
+        plotSampleSizePerPower()
+        return int(sampleSize)
+
+    def SignificanceSensitivityEstimation(self, increaseRate: float, power: float) -> list[int]:
+        baselineRate = self.data[self.data['y'] == 1]['y'].count() / self.data['y'].count()  
+        targetRate = baselineRate * increaseRate  
+        effectSize = proportion_effectsize(baselineRate, targetRate)
+        analysis = NormalIndPower()
+        alphaValues = np.linspace(0.15, 0.01, num=15)
+        sampleSizes = [analysis.solve_power(effect_size=effectSize, power=power, alpha=alpha, ratio=1,
+        alternative='two-sided') for alpha in alphaValues]
+        
+        @AnalysisHelperFunctions.streamLitPlotDisplay
+        def plotSampleSizesPerSignificance():
+            plt.plot(alphaValues, sampleSizes)
+            plt.xlabel("Alpha")
+            plt.ylabel("Sample Size per Group")
+            plt.title("Sample Size vs Alpha (20% Increase in Conversion)")
+            plt.grid(True)
+        plotSampleSizesPerSignificance()
+
+        return sampleSizes
+    
+    def durationAndCostEstimation(self, sampleSizeList: list, totalGroups: int, 
+            dailyTraffic: int, costPerUser: float) -> dict[int, dict[str, float]]:
+        testResults = {}
+        durations = []
+        costs = []
+        for sample in sampleSizeList:
+            duration = (sample * totalGroups) / dailyTraffic
+            cost = sample * totalGroups * costPerUser
+            testResults[sample] = {"test_duration_days": duration, "cost": cost}
+            durations.append(duration)
+            costs.append(cost)
+        
+        @AnalysisHelperFunctions.streamLitPlotDisplay
+        def plotDurationAndCostPerSampleSize():
+            plt.figure(figsize=(12, 5))
+            plt.subplot(1, 2, 1)
+            plt.plot(sampleSizeList, durations, marker='o')
+            plt.title("Sample Size vs Test Duration")
+            plt.xlabel("Sample Size per Group")
+            plt.ylabel("Duration (days)")
+            plt.grid(True)
+            
+            plt.subplot(1, 2, 2)
+            plt.plot(sampleSizeList, costs, marker='o', color='orange')
+            plt.title("Sample Size vs Cost")
+            plt.xlabel("Sample Size per Group")
+            plt.ylabel("Total Cost")
+            plt.grid(True)
+            plt.tight_layout()
+        
+        plotDurationAndCostPerSampleSize()
+        return testResults
+
+    def simulateFalsePositiveRate(self, alpha: float, maxTests: int = 100) -> np.ndarray:
+        """
+        Simulates and plots the probability of at least one false positive
+        as the number of independent hypothesis tests increases.
+
+        Args:
+            alpha (float): Significance level (e.g., 0.05)
+            maxTests (int): Maximum number of tests to simulate
+        """
+        testCounts = np.arange(1, maxTests + 1)
+        falsePositiveProbs = 1 - (1 - alpha) ** testCounts
+        
+        @AnalysisHelperFunctions.streamLitPlotDisplay
+        def plotFalsePositiveProb():
+            plt.figure(figsize=(8, 5))
+            plt.plot(testCounts, falsePositiveProbs, marker='o')
+            plt.title(f'Probability of At Least One False Positive (α = {alpha})')
+            plt.xlabel('Number of Tests')
+            plt.ylabel('Probability of ≥1 False Positive')
+            plt.grid(True)
+            plt.tight_layout()
+        plotFalsePositiveProb()
+        return falsePositiveProbs
+    
+
+
+    def monteCarloPValueWithOdds(self, numPermutations: int = 10000, plot: bool = True) -> dict:
+        numericalCols = self.data.select_dtypes(include='number').columns
+        results = {}
+
+        # Function to compute odds ratio (binary variable vs. target y)
+        def computeOddsRatio(col: str):
+            median = self.data[col].median()
+            high = self.data[col] >= median
+
+            # 2x2 contingency table
+            table = pd.crosstab(high, self.data['y'])
+
+            if table.shape == (2, 2):
+                oddsRatio, _ = fisher_exact(table)
+            else:
+                oddsRatio = np.nan  # Cannot compute
+
+            return oddsRatio
+
+        # Store odds ratios
+        oddsRatios = {}
+
+        for col in numericalCols:
+            # Skip 'y' itself
+            if col == 'y':
+                continue
+
+            group1 = self.data[self.data['y'] == 1][col]
+            group0 = self.data[self.data['y'] == 0][col]
+
+            observedDiff = np.abs(np.median(group1) - np.median(group0))
+            combined = np.concatenate([group1, group0])
+            count = 0
+
+            for _ in range(numPermutations):
+                np.random.shuffle(combined)
+                newX = combined[:len(group1)]
+                newY = combined[len(group1):]
+                permutedDiff = np.abs(np.median(newX) - np.median(newY))
+                if permutedDiff >= observedDiff:
+                    count += 1
+
+            pValue = count / numPermutations
+            results[col] = pValue
+
+            # Compute odds ratio for the variable
+            oddsRatios[col] = computeOddsRatio(col)
+
+        @AnalysisHelperFunctions.streamLitPlotDisplay
+        def plotOddsRatios(oddsDict: dict):
+            keys = list(oddsDict.keys())
+            values = [oddsDict[k] for k in keys]
+
+            sortedPairs = sorted(zip(keys, values), key=lambda x: abs(x[1] if x[1] is not None else 0), reverse=True)
+            labels, odds = zip(*sortedPairs)
+
+            plt.figure(figsize=(10, 5))
+            plt.barh(labels, odds)
+            plt.xlabel("Odds Ratio")
+            plt.title("Odds Ratios for Variables (y ~ feature ≥ median)")
+            plt.axvline(1, color='red', linestyle='--', label="No effect (OR=1)")
+            plt.legend()
+            plt.tight_layout()
+            plt.gca().invert_yaxis()
+            plt.show()
+
+        if plot:
+            plotOddsRatios(oddsRatios)
+
+        return {"p_values": results, "odds_ratios": oddsRatios}
+
     
     def generateQuestions(self) -> Generator[str, None, None]:
         for key in self.questions.keys():

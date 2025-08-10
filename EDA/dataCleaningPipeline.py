@@ -3,7 +3,7 @@ import seaborn as sns
 from typing import Self
 import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
-from AnalysisUtilis import AnalysisHelperFunctions
+from .AnalysisUtilis import AnalysisHelperFunctions
 
 class BaseDataOptimizationPipeline(ABC):
     """Abstract base class defining the interface for data optimization pipelines."""

@@ -1,4 +1,4 @@
-age,job,marital,education,has_default,balance,housing,loan,contact,day,month,duration,campaign,pdays,previous,poutcome,y
+age,job,marital,education,default,balance,housing,loan,contact,day,month,duration,campaign,pdays,previous,poutcome,y
 33,admin.,married,tertiary,False,882,False,False,telephone,21,oct,39,1,151,3,failure,False
 42,admin.,single,secondary,False,-247,True,True,telephone,21,oct,519,1,166,1,other,True
 33,services,married,secondary,False,3444,True,False,telephone,21,oct,144,1,91,4,failure,True
