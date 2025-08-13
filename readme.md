@@ -1,6 +1,6 @@
 # Bank Customer Call Subscription Analysis
 
-> A comprehensive data science project focused on analyzing bank customer call data to understand subscription patterns through advanced data cleaning pipelines and exploratory data analysis.
+> A comprehensive data science project focused on analyzing bank customer call data to understand subscription patterns through advanced data cleaning pipelines, exploratory data analysis, and business intelligence tools.
 
 [![Dataset](https://img.shields.io/badge/Dataset-UCI%20ML%20Repository-blue)](https://archive.ics.uci.edu/dataset/222/bank+marketing)
 [![Domain](https://img.shields.io/badge/Domain-Banking%20Analytics-green)](#)
@@ -16,12 +16,14 @@
 - [Usage](#usage)
 - [Data Processing Pipeline](#data-processing-pipeline)
 - [Exploratory Data Analysis](#exploratory-data-analysis)
+- [Excel Sheet Analysis](#excel-sheet-analysis)
+- [Power BI Analysis](#power-bi-analysis)
 - [Results](#results)
 - [Contributing](#contributing)
 
 ## Overview
 
-This project analyzes bank customer call subscription data using a robust data cleaning pipeline and comprehensive exploratory data analysis (EDA). The system processes banking datasets to identify customer behavior patterns, subscription trends, and key factors influencing customer decisions.
+This project analyzes bank customer call subscription data using a robust data cleaning pipeline, comprehensive exploratory data analysis (EDA), and business intelligence tools (Excel and Power BI). The system processes banking datasets to identify customer behavior patterns, subscription trends, and key factors influencing customer decisions.
 
 **Key Objectives:**
 - Implement comprehensive data cleaning and optimization pipeline
@@ -29,6 +31,7 @@ This project analyzes bank customer call subscription data using a robust data c
 - Identify patterns in customer subscription behavior
 - Handle data quality issues including outliers and missing values
 - Optimize data types and memory usage for large datasets
+- Visualize and analyze data using Excel and Power BI
 
 ## Dataset
 
@@ -85,9 +88,12 @@ BankCustomerCallSubscriptionAnalysis/
 │   ├── NumericalColumnsHistograms.png
 │   ├── CategoricalColumnsHistograms.png
 │   └── CorrelationMatrix.png
+├── ExcelAnalysis/             # Excel files and screenshots
+│   └── bank_marketing_analysis.xlsx
+├── PowerBI/                   # Power BI dashboards and reports
+│   └── bank_marketing_dashboard.pbix
 └── README.md
 ```
-
 
 ## Installation
 
@@ -95,6 +101,12 @@ BankCustomerCallSubscriptionAnalysis/
    ```bash
    git clone https://github.com/yourusername/BankCustomerCallSubscriptionAnalysis.git
    cd BankCustomerCallSubscriptionAnalysis
+   ```
+2. **Create virtual environment:**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
    ```
 
 ## Analysis Tasks
@@ -123,96 +135,68 @@ BankCustomerCallSubscriptionAnalysis/
 **Advanced Features:**
 - Monte Carlo simulation engine with varying parameters
 - Statistical power analysis and sample size calculations
-- Multiple testing correction (Bonferroni, FDR)
-- Sequential testing with early stopping rules
-- Bayesian A/B testing with credible intervals
+
 
 **Statistical Questions:**
 - What sample size is needed to detect a 20% increase in conversion rate?
 - How do different significance levels affect test duration and costs?
 - What is the probability of false positives in multiple testing?
 - How does customer segment variance affect test reliability?
-- What is the expected ROI impact of different optimization strategies?
 
-### Task 4: Machine Learning & Predictive Modeling
-**Objective:** Build predictive models to forecast customer subscription probability and optimize marketing campaigns through advanced ML techniques.
+---
 
-**Core ML Components:**
-- **Binary Classification Models** - Predict subscription likelihood (yes/no)
-- **Feature Engineering Pipeline** - Transform raw data into ML-ready features
-- **Model Ensemble Methods** - Combine multiple algorithms for robust predictions
-- **Hyperparameter Optimization** - Automated tuning for peak performance
-- **Model Interpretability** - SHAP values and feature importance analysis
+## Excel Sheet Analysis
 
-**Advanced ML Features:**
-- **Customer Lifetime Value (CLV) Prediction** - Forecast long-term customer worth
-- **Churn Risk Modeling** - Identify customers likely to discontinue services
-- **Propensity Score Matching** - Advanced causal inference for campaign effectiveness
-- **Time Series Forecasting** - Predict optimal contact timing patterns
-- **Clustering & Segmentation** - Unsupervised customer grouping for targeted campaigns
+Excel was used for:
+- Quick data profiling and summary statistics
+- Pivot tables for segmenting conversion rates by demographic and campaign features
+- Visualizations (bar charts, histograms) for categorical and numerical features
+- Filtering and conditional formatting to highlight outliers and trends
 
-**Model Development Pipeline:**
-1. **Data Preprocessing** - Handle missing values, outliers, and feature scaling
-2. **Feature Selection** - Recursive feature elimination and correlation analysis
-3. **Model Training** - Random Forest, XGBoost, Logistic Regression, Neural Networks
-4. **Cross-Validation** - Stratified K-fold validation with temporal splits
-5. **Performance Evaluation** - ROC-AUC, Precision-Recall, F1-Score, Business Metrics
-6. **Model Deployment** - Production-ready API with monitoring and retraining
+**Key Excel Insights:**
+- Identified top-performing customer segments by age, job, and education
+- Visualized conversion rates by month and contact type
+- Summarized campaign effectiveness by frequency and duration
 
-**Business ML Questions:**
-- Which features are most predictive of customer subscription behavior?
-- How accurately can we predict conversion probability for new prospects?
-- What is the optimal customer acquisition cost based on predicted CLV?
-- Which customer segments should receive different marketing strategies?
-- How can we optimize campaign timing using predictive models?
-- What is the expected lift from ML-driven targeting vs. random campaigns?
+### Excel Analysis Screenshots
 
-**Technical Implementation:**
-- **`ml_pipeline.py`** - End-to-end ML pipeline with preprocessing and training
-- **`feature_engineering.py`** - Advanced feature creation and selection methods
-- **`model_evaluation.py`** - Comprehensive model assessment and validation
-- **`prediction_api.py`** - REST API for real-time prediction serving
-- **`model_monitoring.py`** - Performance tracking and drift detection
-- **`explainability.py`** - Model interpretation and feature importance analysis
+![Excel Pivot Table](ExcelAnalysis/excel_ss(2).png)
+![Excel Multiple Charts](ExcelAnalysis/excel_ss(1).png)
 
-**Expected Deliverables:**
-- Trained ML models with >85% accuracy on subscription prediction
-- Feature importance rankings and business insights
-- Customer segmentation strategy based on ML clustering
-- ROI analysis comparing ML-targeted vs. traditional campaigns
-- Production-ready prediction API with documentation
-- Model performance dashboard with real-time monitoring
+## Power BI Analysis
+
+Power BI dashboards were created to:
+- Provide interactive exploration of customer segments and campaign results
+- Visualize conversion rates, campaign timing, and channel effectiveness
+- Enable drill-down analysis for business users
+
+**Key Power BI Features:**
+- Dynamic filtering by demographic and campaign attributes
+- Time series visualizations for campaign performance
+- Heatmaps and correlation matrices for feature relationships
+
+### Power BI Analysis Screenshots
+
+![Power BI Dashboard Overview](BiAnalysis/PowerBiBank(1).png)
+![Power BI Drill Through Hierarchy](BiAnalysis/PowerBiBank(3).png)
+
 
 ## Analysis Results & Key Findings
 
-### Task 1 Completed: Exploratory Data Analysis & Customer Insights
-
 **Key Business Insights:**
 
-#### **Q1: Customer Demographics with Highest Conversion Rates**
 - **Students**: 26.06% conversion rate (highest performing segment)
 - **Age Factor**: 68-year-olds show 65.22% conversion rate
 - **Strategic Recommendation**: Target student segment and senior demographics for maximum ROI
-
-#### **Q2: Contact Duration & Campaign Frequency Correlation**
 - **Duration Impact**: Strong positive correlation (0.258) with subscription probability
 - **Campaign Frequency**: Negative correlation (-0.089) - fewer contacts yield better results
-- **Insight**: Quality over quantity approach recommended
-
-#### **Q3: Optimal Contact Timing**
 - **Best Month**: May (384 conversions)
 - **Best Day**: 30th of month (146 conversions)
-- **Seasonal Strategy**: Focus campaigns in May, August, April for peak performance
-
-#### **Q4: Economic Indicators Impact**
 - **Optimal Balance Range**: £3,116 - £4,116 (18.8% conversion rate)
 - **Credit Status**: Non-defaulting customers convert at 8.39% (8× higher than defaulters)
 - **Debt Impact**: Debt-free customers show 44% higher conversion potential
 - **Housing Loans**: Customers without housing loans convert at 13.38%
-
-#### **Q5: Communication Channel Effectiveness**
 - **Cellular**: 11.41% conversion rate (optimal channel)
-- **Strategic Focus**: Prioritize cellular communication for customer outreach
 
 **Technical Implementation:**
 - Comprehensive data cleaning pipeline with outlier detection
@@ -228,7 +212,9 @@ BankCustomerCallSubscriptionAnalysis/
 4. **Risk Management**: Prioritize debt-free, creditworthy customers
 5. **Quality Focus**: Emphasize meaningful contact duration over frequency
 
-##  Deliverables
+---
+
+## Deliverables
 
 ### 1. Technical Analysis
 - **EDA Notebook** - Comprehensive exploratory data analysis
@@ -236,25 +222,11 @@ BankCustomerCallSubscriptionAnalysis/
 - **Statistical Models** - A/B testing frameworks and simulations
 - **Visualization Suite** - Interactive charts and dashboards
 
-### 2. Code Implementation
-- **`ab_test_simulator.py`** - Monte Carlo simulation engine
-- **`statistical_analysis.py`** - Power analysis and corrections
-- **`bayesian_ab_testing.py`** - Bayesian testing framework
-- **`dashboard/streamlit_app.py`** - Interactive web application
-- **`sql/queries.sql`** - Optimized database queries
+### 2. Excel & Power BI Analysis
+- **Excel Workbook** - Pivot tables, charts, and summary statistics
+- **Power BI Dashboard** - Interactive business intelligence reports
 
-### 3. Interactive Dashboard Features
-- **Test Designer** - Configure A/B tests with custom parameters
-- **Monte Carlo Simulator** - Real-time simulation results
-- **Power Calculator** - Optimal sample size determination
-- **Results Analyzer** - Statistical significance testing
-- **Business Impact Calculator** - Revenue projections and ROI
-- **Multi-Armed Bandit Simulator** - Advanced allocation strategies
-
-### 4. Documentation
-- **Technical Report (PDF)** - Methodology and findings
-- **Business Strategy Report** - Implementation roadmap
-- **API Documentation** - Code usage and examples
+---
 
 ## Results
 
@@ -265,34 +237,23 @@ BankCustomerCallSubscriptionAnalysis/
 - **Statistical Framework** - Robust A/B testing methodology
 
 ### Business Impact
-- **Conversion Rate Improvemen2. **Create virtual environment:**
-   ```bash
-   python -m venv venv
+- **Conversion Rate Improvement** - Higher ROI through targeted campaigns
 - **Cost Optimization** - Reduced campaign costs through better targeting
 - **Revenue Growth** - Estimated financial impact of optimizations
 - **Testing Infrastructure** - Scalable framework for future experiments
 
-### Statistical Analysis Pipeline
-- **Power Analysis** - Calculate required sample sizes
-- **P-value Distribution** - Visualize significance patterns
-- **Multiple Testing Corrections** - Control error rates
-- **Confidence Intervals** - Show uncertainty estimates
-- **Bayesian Analysis** - Alternative inference methods
+---
 
 ## Skills Demonstrated
 
 ### Technical Skills
-- **Advanced Statistics** - Monte Carlo methods, power analysis, Bayesian inference
+- **Advanced Statistics** - Monte Carlo methods
 - **Python Development** - Object-oriented design, statistical libraries
 - **Data Visualization** - Interactive dashboards and statistical plots
 - **SQL Optimization** - Efficient queries and data engineering
-- **Web Development** - Streamlit applications and real-time updates
+- **Excel & Power BI** - Business intelligence and reporting
 
 ### Business Skills
 - **A/B Testing Strategy** - Experimental design and interpretation
-- **ROI Analysis** - Business impact measurement
 - **Campaign Optimization** - Data-driven marketing decisions
 - **Growth Strategy** - Systematic experimentation framework
-
-
-
